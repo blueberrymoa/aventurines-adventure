@@ -1,10 +1,16 @@
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
 const game = {
+
   width: 800,
   height: 600,
   gravity: 0.3,
+  stars: [],
+  level: 1,
+  gameOver: false,
+  levelComplete: false,
+  startTime: null,
   player: {
     x: 0, //365,
     y: 0, //370,
@@ -16,41 +22,51 @@ const game = {
     offsetY: 0
   },
   platform: {
-    width: 100,
-    height: 100,
     x: 0,
     y: 0,
+    width: 100,
+    height: 100,
     visible: true
   },
   assets: {
     sky: 'assets/purple_sky.jpg',
     ground: 'assets/platform.png',
     star: 'assets/star.png',
-    bomb: 'assets/bomb.png',
     dude: 'assets/dude.png'
   }
+
 };
 
-// Preload assets
+// Preloads assets
 const images = {};
 function preload() {
+
   for (const [key, value] of Object.entries(game.assets)) {
     const img = new Image();
     img.src = value;
     images[key] = img;
   }
+  
 }
 
-// Create game objects
+// Creates game objects
 function create() {
 
-  // Center starting platform
+  //stars = [];
+  // gameOver = false;
+  // levelComplete = false;
+  // startTime = Date.now();
+  // spawnStars();
+  // gameOverOverlay.style.display = 'none';
+  // levelCompleteOverlay.style.display = 'none';
+
+  // Centers starting platform
   if (game.platform.visible) {
     game.platform.x = (game.width - game.platform.width) / 2;
     game.platform.y = game.height / 2;
   }
 
-  // Center the player image above the platform
+  // Centers the player above the platform
   game.player.x = (game.width - game.player.width) / 2;
   game.player.y = game.platform.y - game.player.height;
 
@@ -58,63 +74,122 @@ function create() {
 
 }
 
+function spawnStars() {
+
+  for (let i = 0; i < 5 + level; i++) {
+      stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          width: 30,
+          height: 30,
+          speed: 2 + level * 0.5
+      });
+  }
+
+}
+
+// Initializes starting platform
+// Updates background and player
 function draw() {
 
-  // Draw sky
+  // Draws sky
   ctx.drawImage(images.sky, 0, 0, game.width, game.height);
 
-  // Draw starting platform
+  // Draws starting platform
   if (game.platform.visible) {
     ctx.drawImage(images.ground, game.platform.x, game.platform.y, game.platform.width, game.platform.height);
   }
 
-  // Draw player
+  // Draws player
   ctx.drawImage(images.dude, game.player.x, game.player.y, game.player.width, game.player.height);
+
+  // // Draws stars
+  // if (!game.platform.visible) {
+  //   stars.forEach(star => {
+  //     ctx.drawImage(images.star, star.x, star.y, star.width, star.height);
+  //   });
+  // }
+
+  // // Moves stars
+  // function moveStars() {
+  //   stars.forEach(star => {
+  //       star.x -= star.speed;
+  //       if (star.x + star.width < 0) {
+  //           star.x = canvas.width;
+  //           star.y = Math.random() * canvas.height;
+  //       }
+  //   });
+  // }
 
 }
 
-
-// Update game state
+// Updates game state
 function update() {
 
-  // Check if player is being dragged
+  // Checks if player is being dragged
   if (!game.player.dragging) {
-    // Simulate gravity
+    // Simulates gravity
     game.player.velocityY += game.gravity;
     game.player.y += game.player.velocityY;
   }
 
-  // Check for collision with floor
+  // Checks for collision with floor
   if (game.player.y + game.player.height >= game.height) {
     game.player.y = game.height - game.player.height;
     game.player.velocityY = 0;
   }
 
-  // Check for collision with platform if visible
+  // Checks for collision with platform if visible
   if (game.platform.visible && 
     game.player.y + game.player.height >= game.platform.y + 70 &&
     game.player.y + game.player.height <= game.platform.y + game.platform.height &&
-    game.player.x + game.player.width > game.platform.x &&
+    game.player.x + game.player.width > game.platform.x && 
     game.player.x < game.platform.x + game.platform.width) {
       game.player.y = (game.platform.y + 70) - game.player.height;
       game.player.velocityY = 0;
   }
 
-  // Redraw game
+  // stars.forEach(star => {
+  //   if (
+  //       player.x < star.x + star.width &&
+  //       player.x + player.width > star.x &&
+  //       player.y < star.y + star.height &&
+  //       player.y + player.height > star.y
+  //   ) {
+  //       gameOver = true;
+  //   }
+  // });
+
+  // if (gameOver) {
+  //   gameOverOverlay.style.display = 'block';
+  //   return;
+  // }
+
+  // if (!startTime) startTime = Date.now();
+  // const elapsedTime = (Date.now() - startTime) / 1000;
+
+  // if (elapsedTime > 10) {
+  //   levelComplete = true;
+  //   levelCompleteOverlay.style.display = 'block';
+  //   return;
+  // }
+
+  // Redraws game
   ctx.clearRect(0, 0, game.width, game.height);
   draw();
 
-  // Request next frame
+  // Requests next frame
   requestAnimationFrame(update);
 
 }
 
-// Event listeners for click-and-drag
+// Event listener for click
 canvas.addEventListener('mousedown', function(event) {
   const mouseX = event.clientX - canvas.getBoundingClientRect().left;
   const mouseY = event.clientY - canvas.getBoundingClientRect().top;
 
-  // Check if mouse is over the player
+  // Checks if mouse is over the player
+  // Removes platform from game canvas
   if (
     mouseX >= game.player.x && mouseX <= game.player.x + game.player.width &&
     mouseY >= game.player.y && mouseY <= game.player.y + game.player.height
@@ -126,7 +201,11 @@ canvas.addEventListener('mousedown', function(event) {
   }
 });
 
+// Event listener for drag
 canvas.addEventListener('mousemove', function(event) {
+
+  // Checks if player is clicked
+  // Drags player along with mouse
   if (game.player.dragging) {
     const mouseX = event.clientX - canvas.getBoundingClientRect().left;
     const mouseY = event.clientY - canvas.getBoundingClientRect().top;
@@ -135,15 +214,41 @@ canvas.addEventListener('mousemove', function(event) {
   }
 });
 
+// Releases player from canvas
 canvas.addEventListener('mouseup', function(event) {
   game.player.dragging = false;
 });
 
+// Releases player from outside canvas
 window.addEventListener('mouseup', function(event) {
   game.player.dragging = false;
 });
 
-// Start game
+// Event listener for menu button
+document.addEventListener('DOMContentLoaded', () => {
+  const menuButton = document.getElementById('return-to-menu');
+  menuButton.addEventListener('click', () => {
+      window.location.href = 'index.html';
+  });
+});
+
+// backButton.addEventListener('click', () => {
+//   window.location.href = 'index.html';
+// });
+
+// retryButton.addEventListener('click', () => {
+//   level = 1;
+//   resetGame();
+//   update();
+// });
+
+// continueButton.addEventListener('click', () => {
+//   level++;
+//   resetGame();
+//   update();
+// });
+
+// Starts game
 preload();
 create();
 update();

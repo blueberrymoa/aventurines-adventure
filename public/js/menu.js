@@ -4,10 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('instructions').addEventListener('click', () => {
-    alert('Instructions: Welcome to a Honkai: Star Rail mini game! Use arrow keys to move, spacebar to shoot.');
+    alert('Welcome to a Honkai: Star Rail mini game! Use arrow keys to move, spacebar to shoot.');
   });
 
   document.getElementById('credits').addEventListener('click', () => {
-    alert('Credits: Game developed by Conner Small. For Ollie <3');
+    alert('Game developed by Conner Small. For Ollie <3');
   });
 });
