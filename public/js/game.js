@@ -1,5 +1,11 @@
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
+const gameOverOverlay = document.getElementById('game-over');
+const retryButton = document.getElementById('retry');
+const levelCompleteOverlay = document.getElementById('level-complete');
+const continueButton = document.getElementById('continue');
+const menuButton = document.getElementById('return-to-menu');
+const levelNumber = document.getElementById('level-number');
 
 const game = {
 
@@ -8,7 +14,7 @@ const game = {
   gravity: 0.3,
   stars: [],
   level: 1,
-  gameOver: false,
+  over: false,
   levelComplete: false,
   startTime: null,
   player: {
@@ -52,13 +58,13 @@ function preload() {
 // Creates game objects
 function create() {
 
-  //stars = [];
-  // gameOver = false;
-  // levelComplete = false;
-  // startTime = Date.now();
-  // spawnStars();
-  // gameOverOverlay.style.display = 'none';
-  // levelCompleteOverlay.style.display = 'none';
+  game.stars = [];
+  game.over = false;
+  game.levelComplete = false;
+  game.startTime = Date.now();
+  spawnStars();
+  gameOverOverlay.style.display = 'none';
+  levelCompleteOverlay.style.display = 'none';
 
   // Centers starting platform
   if (game.platform.visible) {
@@ -74,16 +80,50 @@ function create() {
 
 }
 
+// Spawns stars
 function spawnStars() {
 
-  for (let i = 0; i < 5 + level; i++) {
-      stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          width: 30,
-          height: 30,
-          speed: 2 + level * 0.5
-      });
+  const edgeBuffer = 10; // Buffer to ensure stars are spawned just inside the edges
+  const numberOfStars = 2 + game.level * 2;
+        
+  for (let i = 0; i < numberOfStars; i++) {
+    let x, y;
+
+    // Randomly select which edge to spawn the star
+    const edge = Math.floor(Math.random() * 4);
+    switch (edge) {
+      case 0: // Top edge
+        x = Math.random() * (canvas.width - edgeBuffer * 2) + edgeBuffer;
+        y = edgeBuffer;
+        break;
+      case 1: // Bottom edge
+        x = Math.random() * (canvas.width - edgeBuffer * 2) + edgeBuffer;
+        y = canvas.height - edgeBuffer;
+        break;
+      case 2: // Left edge
+        x = edgeBuffer;
+        y = Math.random() * (canvas.height - edgeBuffer * 2) + edgeBuffer;
+        break;
+      case 3: // Right edge
+        x = canvas.width - edgeBuffer;
+        y = Math.random() * (canvas.height - edgeBuffer * 2) + edgeBuffer;
+        break;
+    }
+            
+    let speed = 2 + game.level * 0.5;
+    let directionX = (Math.random() * 2 - 1) * speed;
+    let directionY = (Math.random() * 2 - 1) * speed;       
+
+    game.stars.push({
+      x: x,
+      y: y,
+      width: 30,
+      height: 30,
+      speed: speed,
+      directionX: directionX,
+      directionY: directionY
+    });
+
   }
 
 }
@@ -103,23 +143,24 @@ function draw() {
   // Draws player
   ctx.drawImage(images.dude, game.player.x, game.player.y, game.player.width, game.player.height);
 
-  // // Draws stars
-  // if (!game.platform.visible) {
-  //   stars.forEach(star => {
-  //     ctx.drawImage(images.star, star.x, star.y, star.width, star.height);
-  //   });
-  // }
+  // Draws stars
+  game.stars.forEach(star => {
+    ctx.drawImage(images.star, star.x, star.y, star.width, star.height);
+  });
 
-  // // Moves stars
-  // function moveStars() {
-  //   stars.forEach(star => {
-  //       star.x -= star.speed;
-  //       if (star.x + star.width < 0) {
-  //           star.x = canvas.width;
-  //           star.y = Math.random() * canvas.height;
-  //       }
-  //   });
-  // }
+  // Moves stars
+  game.stars.forEach(star => {
+    star.x += star.directionX;
+    star.y += star.directionY;
+
+    // Bounce off the edges of the canvas
+    if (star.x <= 0 || star.x + star.width >= canvas.width) {
+        star.directionX *= -1;
+    }
+    if (star.y <= 0 || star.y + star.height >= canvas.height) {
+        star.directionY *= -1;
+    }
+  });
 
 }
 
@@ -149,30 +190,34 @@ function update() {
       game.player.velocityY = 0;
   }
 
-  // stars.forEach(star => {
-  //   if (
-  //       player.x < star.x + star.width &&
-  //       player.x + player.width > star.x &&
-  //       player.y < star.y + star.height &&
-  //       player.y + player.height > star.y
-  //   ) {
-  //       gameOver = true;
-  //   }
-  // });
+  // Checks for collision with moving star
+  game.stars.forEach(star => {
+    if (
+        game.player.x < star.x + star.width &&
+        game.player.x + game.player.width > star.x &&
+        game.player.y < star.y + star.height &&
+        game.player.y + game.player.height > star.y
+    ) {
+        game.over = true;
+    }
+  });
 
-  // if (gameOver) {
-  //   gameOverOverlay.style.display = 'block';
-  //   return;
-  // }
+  if (game.over) {
+    gameOverOverlay.style.display = 'block';
+    game.platform.visible = true;
+    return;
+  }
 
-  // if (!startTime) startTime = Date.now();
-  // const elapsedTime = (Date.now() - startTime) / 1000;
+  if (!game.startTime) game.startTime = Date.now();
+  const elapsedTime = (Date.now() - game.startTime) / 1000;
 
-  // if (elapsedTime > 10) {
-  //   levelComplete = true;
-  //   levelCompleteOverlay.style.display = 'block';
-  //   return;
-  // }
+  if (elapsedTime > 10) {
+    game.levelComplete = true;
+    levelNumber.textContent = game.level;
+    levelCompleteOverlay.style.display = 'block';
+    game.platform.visible = true;
+    return;
+  }
 
   // Redraws game
   ctx.clearRect(0, 0, game.width, game.height);
@@ -214,41 +259,39 @@ canvas.addEventListener('mousemove', function(event) {
   }
 });
 
-// Releases player from canvas
-canvas.addEventListener('mouseup', function(event) {
-  game.player.dragging = false;
-});
-
-// Releases player from outside canvas
+// Releases player
 window.addEventListener('mouseup', function(event) {
   game.player.dragging = false;
 });
 
-// Event listener for menu button
-document.addEventListener('DOMContentLoaded', () => {
-  const menuButton = document.getElementById('return-to-menu');
-  menuButton.addEventListener('click', () => {
-      window.location.href = 'index.html';
-  });
+// // Event listener for menu button
+// document.addEventListener('DOMContentLoaded', () => {
+//   const menuButton = document.getElementById('return-to-menu');
+//   menuButton.addEventListener('click', () => {
+//       window.location.href = 'index.html';
+//   });
+// });
+
+menuButton.addEventListener('click', () => {
+  window.location.href = 'index.html';
 });
 
-// backButton.addEventListener('click', () => {
-//   window.location.href = 'index.html';
-// });
+retryButton.addEventListener('click', () => {
+  game.level = 1;
+  startGame();
+});
 
-// retryButton.addEventListener('click', () => {
-//   level = 1;
-//   resetGame();
-//   update();
-// });
-
-// continueButton.addEventListener('click', () => {
-//   level++;
-//   resetGame();
-//   update();
-// });
+continueButton.addEventListener('click', () => {
+  game.level++;
+  startGame();
+});
 
 // Starts game
-preload();
-create();
-update();
+function startGame() {
+  preload();
+  create();
+  update();
+}
+
+// Starts level 1
+startGame();

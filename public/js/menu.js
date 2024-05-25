@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('instructions').addEventListener('click', () => {
-    alert('Welcome to a Honkai: Star Rail mini game! Use arrow keys to move, spacebar to shoot.');
+    alert('Welcome to a Honkai: Star Rail mini game! Click and drag Aventurine to avoid the stars.');
   });
 
   document.getElementById('credits').addEventListener('click', () => {
