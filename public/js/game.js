@@ -58,6 +58,7 @@ function create() {
   game.stars = [];
   game.over = false;
   game.levelComplete = false;
+  game.skip5 = false;
   game.startTime = Date.now();
   spawnStars();
   gameOverOverlay.style.display = 'none';
