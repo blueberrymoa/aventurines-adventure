@@ -9,8 +9,7 @@ const levelNumber = document.getElementById('level-number');
 
 const game = {
 
-  width: 800,
-  height: 600,
+  width: 800, height: 600,
   gravity: 0.3,
   stars: [],
   level: 1,
@@ -18,20 +17,16 @@ const game = {
   levelComplete: false,
   startTime: null,
   player: {
-    x: 0, //365,
-    y: 0, //370,
-    width: 100,
-    height: 106,
+    x: 0, y: 0,
+    width: 100, height: 106,
     velocityY: 0,
     dragging: false, // Track if player is being dragged
     offsetX: 0, // Offset between mouse and player position
     offsetY: 0
   },
   platform: {
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 100,
+    x: 0, y: 0,
+    width: 100, height: 100,
     visible: true
   },
   assets: {
@@ -76,14 +71,14 @@ function create() {
   game.player.x = (game.width - game.player.width) / 2;
   game.player.y = game.platform.y - game.player.height;
 
-  draw();
+  draw(0);
 
 }
 
 // Spawns stars
 function spawnStars() {
 
-  const edgeBuffer = 10; // Buffer to ensure stars are spawned just inside the edges
+  const edgeBuffer = 50; // Buffer to ensure stars are spawned just inside the edges
   const numberOfStars = 2 + game.level * 2;
         
   for (let i = 0; i < numberOfStars; i++) {
@@ -109,16 +104,15 @@ function spawnStars() {
         y = Math.random() * (canvas.height - edgeBuffer * 2) + edgeBuffer;
         break;
     }
-            
+    
+    // Sets star speed and direction
     let speed = 2 + game.level * 0.5;
     let directionX = (Math.random() * 2 - 1) * speed;
     let directionY = (Math.random() * 2 - 1) * speed;       
 
     game.stars.push({
-      x: x,
-      y: y,
-      width: 30,
-      height: 30,
+      x: x, y: y,
+      width: 30, height: 30,
       speed: speed,
       directionX: directionX,
       directionY: directionY
@@ -130,7 +124,7 @@ function spawnStars() {
 
 // Initializes starting platform
 // Updates background and player
-function draw() {
+function draw(elapsedTime) {
 
   // Draws sky
   ctx.drawImage(images.sky, 0, 0, game.width, game.height);
@@ -142,6 +136,14 @@ function draw() {
 
   // Draws player
   ctx.drawImage(images.dude, game.player.x, game.player.y, game.player.width, game.player.height);
+
+  // Draws timer
+  const minutes = Math.floor(elapsedTime / 60);
+  const secs = Math.floor(elapsedTime % 60);
+  ctx.font = '20px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${minutes}:${secs < 10 ? '0' : ''}${secs}`, canvas.width - 15, 30);
 
   // Draws stars
   game.stars.forEach(star => {
@@ -174,44 +176,49 @@ function update() {
     game.player.y += game.player.velocityY;
   }
 
+  // Checks for collision with platform if visible
+  if (
+      game.platform.visible && 
+      game.player.y + game.player.height >= game.platform.y + 70 &&
+      game.player.y + game.player.height <= game.platform.y + game.platform.height &&
+      game.player.x + game.player.width > game.platform.x && 
+      game.player.x < game.platform.x + game.platform.width
+  ) {
+      game.player.y = (game.platform.y + 70) - game.player.height;
+      game.player.velocityY = 0;
+  }
+
   // Checks for collision with floor
   if (game.player.y + game.player.height >= game.height) {
     game.player.y = game.height - game.player.height;
     game.player.velocityY = 0;
   }
 
-  // Checks for collision with platform if visible
-  if (game.platform.visible && 
-    game.player.y + game.player.height >= game.platform.y + 70 &&
-    game.player.y + game.player.height <= game.platform.y + game.platform.height &&
-    game.player.x + game.player.width > game.platform.x && 
-    game.player.x < game.platform.x + game.platform.width) {
-      game.player.y = (game.platform.y + 70) - game.player.height;
-      game.player.velocityY = 0;
-  }
-
   // Checks for collision with moving star
   game.stars.forEach(star => {
     if (
-        game.player.x < star.x + star.width &&
-        game.player.x + game.player.width > star.x &&
-        game.player.y < star.y + star.height &&
-        game.player.y + game.player.height > star.y
+        game.player.x + star.width < star.x + star.width && // Player left collision
+        game.player.x + game.player.width - star.width > star.x && // Player right collision
+        game.player.y + star.height < star.y + star.height && // Player top collision
+        game.player.y + game.player.height - star.height > star.y // Player bottom collision
     ) {
         game.over = true;
     }
   });
 
+  // Game over screen
   if (game.over) {
     gameOverOverlay.style.display = 'block';
     game.platform.visible = true;
     return;
   }
 
+  // Updates elapsed time
   if (!game.startTime) game.startTime = Date.now();
-  const elapsedTime = (Date.now() - game.startTime) / 1000;
+  const elapsedTime = ((Date.now() - game.startTime) / 1000) + 1;
 
-  if (elapsedTime > 10) {
+  // End of level screen, shown after 10 seconds
+  if (elapsedTime > 11) {
     game.levelComplete = true;
     levelNumber.textContent = game.level;
     levelCompleteOverlay.style.display = 'block';
@@ -221,7 +228,7 @@ function update() {
 
   // Redraws game
   ctx.clearRect(0, 0, game.width, game.height);
-  draw();
+  draw(elapsedTime);
 
   // Requests next frame
   requestAnimationFrame(update);
@@ -263,14 +270,6 @@ canvas.addEventListener('mousemove', function(event) {
 window.addEventListener('mouseup', function(event) {
   game.player.dragging = false;
 });
-
-// // Event listener for menu button
-// document.addEventListener('DOMContentLoaded', () => {
-//   const menuButton = document.getElementById('return-to-menu');
-//   menuButton.addEventListener('click', () => {
-//       window.location.href = 'index.html';
-//   });
-// });
 
 menuButton.addEventListener('click', () => {
   window.location.href = 'index.html';
