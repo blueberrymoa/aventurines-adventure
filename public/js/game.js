@@ -165,6 +165,9 @@ function draw() {
     if (star.y <= 0 || star.y + star.height >= canvas.height) {
         star.directionY *= -1;
     }
+
+    // Bounce stars off each other //
+
   });
 
 }
