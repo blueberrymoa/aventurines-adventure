@@ -16,6 +16,8 @@ const game = {
   over: false,
   levelComplete: false,
   startTime: null,
+  elapsedTime: 0,
+  skip5: false,
   player: {
     x: 0, y: 0,
     width: 100, height: 106,
@@ -71,7 +73,7 @@ function create() {
   game.player.x = (game.width - game.player.width) / 2;
   game.player.y = game.platform.y - game.player.height;
 
-  draw(0);
+  draw();
 
 }
 
@@ -124,7 +126,7 @@ function spawnStars() {
 
 // Initializes starting platform
 // Updates background and player
-function draw(elapsedTime) {
+function draw() {
 
   // Draws sky
   ctx.drawImage(images.sky, 0, 0, game.width, game.height);
@@ -138,8 +140,8 @@ function draw(elapsedTime) {
   ctx.drawImage(images.dude, game.player.x, game.player.y, game.player.width, game.player.height);
 
   // Draws timer
-  const minutes = Math.floor(elapsedTime / 60);
-  const secs = Math.floor(elapsedTime % 60);
+  const minutes = Math.floor(game.elapsedTime / 60);
+  const secs = Math.floor(game.elapsedTime % 60);
   ctx.font = '20px Arial';
   ctx.fillStyle = 'white';
   ctx.textAlign = 'right';
@@ -215,10 +217,10 @@ function update() {
 
   // Updates elapsed time
   if (!game.startTime) game.startTime = Date.now();
-  const elapsedTime = ((Date.now() - game.startTime) / 1000) + 1;
+  updateTime();
 
   // End of level screen, shown after 10 seconds
-  if (elapsedTime > 11) {
+  if (game.elapsedTime > 11) {
     game.levelComplete = true;
     levelNumber.textContent = game.level;
     levelCompleteOverlay.style.display = 'block';
@@ -228,10 +230,39 @@ function update() {
 
   // Redraws game
   ctx.clearRect(0, 0, game.width, game.height);
-  draw(elapsedTime);
+  draw();
 
   // Requests next frame
   requestAnimationFrame(update);
+
+}
+
+// Increases seconds by 1
+// Skips 5 seconds if keys pressed
+function updateTime() {
+
+  // Checks if 's' and '5' are pressed
+  // Activates cheat
+  const keys = {};
+  document.addEventListener('keydown', (event) => {
+    keys[event.key] = true;
+    if (keys['s'] && keys['5']) {
+      console.log('s and 5 keys pressed together');
+      game.skip5 = true;
+    }
+  });
+  document.addEventListener('keyup', (event) => {
+    keys[event.key] = false;
+  });
+  
+  // If cheat inactive, seconds increase by 1
+  // If cheat active, seconds increase by 5
+  if (!game.skip5) {
+    game.elapsedTime = ((Date.now() - game.startTime) / 1000) + 1;
+  } else {
+    console.log('inside');
+    game.elapsedTime = ((Date.now() - game.startTime) / 1000) + 6;
+  }
 
 }
 
