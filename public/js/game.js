@@ -32,7 +32,7 @@ const game = {
     visible: true
   },
   assets: {
-    sky: 'assets/purple_sky.jpg',
+    //sky: 'assets/white.png',
     ground: 'assets/platform.png',
     star: 'assets/star.png',
     dude: 'assets/dude.png'
@@ -128,8 +128,8 @@ function spawnStars() {
 // Updates background and player
 function draw() {
 
-  // Draws sky
-  ctx.drawImage(images.sky, 0, 0, game.width, game.height);
+  // // Draws sky
+  // ctx.drawImage(images.sky, 0, 0, game.width, game.height);
 
   // Draws starting platform
   if (game.platform.visible) {
@@ -178,35 +178,8 @@ function update() {
     game.player.y += game.player.velocityY;
   }
 
-  // Checks for collision with platform if visible
-  if (
-      game.platform.visible && 
-      game.player.y + game.player.height >= game.platform.y + 70 &&
-      game.player.y + game.player.height <= game.platform.y + game.platform.height &&
-      game.player.x + game.player.width > game.platform.x && 
-      game.player.x < game.platform.x + game.platform.width
-  ) {
-      game.player.y = (game.platform.y + 70) - game.player.height;
-      game.player.velocityY = 0;
-  }
-
-  // Checks for collision with floor
-  if (game.player.y + game.player.height >= game.height) {
-    game.player.y = game.height - game.player.height;
-    game.player.velocityY = 0;
-  }
-
-  // Checks for collision with moving star
-  game.stars.forEach(star => {
-    if (
-        game.player.x + star.width < star.x + star.width && // Player left collision
-        game.player.x + game.player.width - star.width > star.x && // Player right collision
-        game.player.y + star.height < star.y + star.height && // Player top collision
-        game.player.y + game.player.height - star.height > star.y // Player bottom collision
-    ) {
-        game.over = true;
-    }
-  });
+  // Checks for player collisions
+  collisionChecks();
 
   // Game over screen
   if (game.over) {
@@ -237,6 +210,56 @@ function update() {
 
 }
 
+function collisionChecks() {
+
+  // Checks for collision with platform if visible
+    if (
+      game.platform.visible && 
+      game.player.y + game.player.height >= game.platform.y + 70 &&
+      game.player.y + game.player.height <= game.platform.y + game.platform.height &&
+      game.player.x + game.player.width > game.platform.x && 
+      game.player.x < game.platform.x + game.platform.width
+  ) {
+      game.player.y = (game.platform.y + 70) - game.player.height;
+      game.player.velocityY = 0;
+  }
+
+  // Checks for collision with floor
+  if (game.player.y + game.player.height >= game.height) {
+    game.player.y = game.height - game.player.height;
+    game.player.velocityY = 0;
+  }
+
+  // Checks for collision with ceiling
+  if (game.player.y <= -5) {
+    game.player.y = -5;
+  }
+
+  // Checks for collision with left wall
+  if (game.player.x <= -10) {
+    game.player.x = -10;
+  }
+
+  // Checks for collision with right wall
+  if (game.player.x + game.player.width >= game.width + 15) {
+    game.player.x = game.width - game.player.width + 15;
+  }
+
+
+  // Checks for collision with moving star
+  game.stars.forEach(star => {
+    if (
+        game.player.x + star.width < star.x + star.width && // Player left collision
+        game.player.x + game.player.width - star.width > star.x && // Player right collision
+        game.player.y + star.height < star.y + star.height && // Player top collision
+        game.player.y + game.player.height - star.height > star.y // Player bottom collision
+    ) {
+        game.over = true;
+    }
+  });
+
+}
+
 // Increases seconds by 1
 // Skips 5 seconds if keys pressed
 function updateTime() {
@@ -247,7 +270,6 @@ function updateTime() {
   document.addEventListener('keydown', (event) => {
     keys[event.key] = true;
     if (keys['s'] && keys['5']) {
-      console.log('s and 5 keys pressed together');
       game.skip5 = true;
     }
   });
@@ -260,7 +282,7 @@ function updateTime() {
   if (!game.skip5) {
     game.elapsedTime = ((Date.now() - game.startTime) / 1000) + 1;
   } else {
-    console.log('inside');
+    console.log('Cheat activated!');
     game.elapsedTime = ((Date.now() - game.startTime) / 1000) + 6;
   }
 
@@ -302,15 +324,18 @@ window.addEventListener('mouseup', function(event) {
   game.player.dragging = false;
 });
 
+// Returns user to menu screen
 menuButton.addEventListener('click', () => {
   window.location.href = 'index.html';
 });
 
+// Returns user to level 1
 retryButton.addEventListener('click', () => {
   game.level = 1;
   startGame();
 });
 
+// Sends user to next level
 continueButton.addEventListener('click', () => {
   game.level++;
   startGame();
