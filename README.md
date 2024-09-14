@@ -1,4 +1,4 @@
-# My Project
+# Aventurine's Adventure
 
 This is a Honkai: Star Rail themed mini game called "Aventurine's Adventure," where you must avoid the flying stars to survive!
 
@@ -23,3 +23,6 @@ npm --version
 ```bash
 npm start
 ```
+## Credit
+
+Disclaimer: all images and references used for education purposes as this is a project to build my skills and not for profit
